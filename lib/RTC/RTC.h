@@ -16,7 +16,7 @@ public:
     void begin();
     String get_date(char = '/');
     String get_time(char = ':');
-    void reconfig();
+    void reconfig(const char*, const char*);
 };
 
 #endif

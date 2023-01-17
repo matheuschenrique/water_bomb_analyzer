@@ -164,7 +164,7 @@ void ADCRead::calibration(void (*set_timer)()) {
     
     if(calibration_state) {
         previous_calibration_state = 1;
-        threshold = mapdouble(analogRead(POTpin), 0, 1023, 0, 5);
+        threshold = mapdouble(analogRead(POTpin), 0, 1023, 0, 4);
         Serial.print("POT: ");
         Serial.println(threshold);
     }
