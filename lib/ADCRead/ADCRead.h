@@ -24,8 +24,6 @@ class ADCRead
         double current_samples[SAMPLES];
         double last_trigger;
         bool current_fill();
-        double sample_mean_calc(double *, size_t);
-        void array_sample_shift(double *, size_t);
         void initial_state();
         void current_check();
         void calibration(void (*set_timer)());
@@ -39,9 +37,11 @@ class ADCRead
         uint8_t monitor(void (*set_timer)());
         bool get_state() { return state; }
         void set_calibration();
-        void set_threshold(double);
+        void set_threshold(const double);
         void write_state();
         bool begin(uint8_t, double, double);
+        double sum = 0;
+        double old_sample;
 };
 
 #endif

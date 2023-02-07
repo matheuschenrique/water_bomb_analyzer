@@ -19,6 +19,7 @@ bool Button::monitor(bool compare) {
     int reading = digitalRead(pin);
     if(reading != lastState) {
         timeout = millis();
+        lastState = reading;
     }
 
     if ((millis() - timeout) > 500) {
@@ -31,6 +32,5 @@ bool Button::monitor(bool compare) {
         }
     }
 
-    lastState = reading;
     return 0;
 }

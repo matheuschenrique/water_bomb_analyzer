@@ -4,10 +4,12 @@
  * reconfig:
  * chamar a funcao quando for recalibrar o horario
  * inserir data e hora base nos campos correspondentes
+ * ex: data = "Dec 21 2022"
+ *     hora = "20:30:00"
  */
-void RTC::reconfig() {
+void RTC::reconfig(const char* data, const char* hora) {
     Serial.println("Reconfigurando horario");
-    rtc.adjust(DateTime(F("Dec 16 2022"), F("00:09:00")));
+    rtc.adjust(DateTime(data, hora));
 }
 
 /*
@@ -25,9 +27,6 @@ void RTC::begin() {
     }
     Serial.println("RTC Pronto!");
     now = rtc.now();
-    if(now.year() < 2022) {
-        reconfig();
-    }
 }
 
 /*

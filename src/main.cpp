@@ -4,16 +4,29 @@
     potenciometro não funciona
 */
 #include <Arduino.h>
-#include "pinout.h"
-#include "ADCRead.h"
-#include "led.h"
-#include "button.h"
+#include <pinout.h>
+#include <ADCRead.h>
+#include <led.h>
+#include <button.h>
 
+/*
+ * MODE - Modo de operacao
+ * 0 - Reconfigurar RTC
+ * 1 - Modo de operacao normal
+ */
+uint8_t MODE = 1;
+
+// Inicializacao das classes
 ADCRead ADC;
 LED led;
 Button button;
 hw_timer_t *timer = NULL;
 
+// Defines
+#define CALIBRATION         270     // Calibracao do sensor de corrente
+#define CURRENT_SMALLEST    0.85    // Calibracao do valor 0 do sensor de corrente
+
+// Prototipo de funcoes
 void set_timer();
 void button_callback();
 void cb_timer();
@@ -31,7 +44,7 @@ void setup() {
 
     button.init(BUTTONpin);
 
-    if (!ADC.begin(pinSCT, 270, 0.85)) {
+    if (!ADC.begin(pinSCT, CALIBRATION, CURRENT_SMALLEST)) {
         // fica preso no loop caso a inicializacao do sd card falhe
         while(1);
     }
@@ -40,13 +53,18 @@ void setup() {
 }
 
 void loop() {
-    if (ADC.monitor(set_timer) != 0xFF) {
-        Serial.printf("%s\t%s\t%d\n", ADC.rtc.get_date(), ADC.rtc.get_time(), ADC.get_state());
-        led.state(ADC.get_state());
-    }
+    if (MODE == 0) {
+        ADC.rtc.reconfig("Jan 09 2023", "21:20:00");
+        MODE = 1;
+    } else if (MODE == 1) {
+        if (ADC.monitor(set_timer) != 0xFF) {
+            Serial.printf("%s\t%s\t%d\n", ADC.rtc.get_date(), ADC.rtc.get_time(), ADC.get_state());
+            led.state(ADC.get_state());
+        }
 
-    if(button.monitor(LOW)) {
-        ADC.calibration_state = !ADC.calibration_state;
+        if(button.monitor(LOW)) {
+            ADC.calibration_state = !ADC.calibration_state;
+        }
     }
 }
 

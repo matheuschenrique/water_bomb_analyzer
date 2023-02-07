@@ -13,35 +13,9 @@
  * mapdouble:
  * realiza mapeamento de um range para outro de um valor do tipo double
  */
-double mapdouble(double x, double in_min, double in_max, double out_min, double out_max)
+double mapdouble(const double &x, const double &in_min, const double &in_max, const double &out_min, const double &out_max)
 {
     return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-}
-
-/*
- * array_sample_shift:
- * desloca todos os elementos da array em uma posicao para direita
- */
-void ADCRead::array_sample_shift(double *arr, size_t size) {
-    size_t i = 1;
-    while(i < size) {
-        *(arr + size - i) = *(arr + size - i - 1); //ex:  arr[4] = arr[3]
-        i++;
-    }
-}
-
-/*
- * sample_mean_calc:
- * calcula a media de todos os valores da array
- */
-double ADCRead::sample_mean_calc(double *arr, size_t size) {
-    double sum = 0;
-    size_t i = 0;
-    while(i < size) {
-        sum += *(arr + i);
-        i++;
-    }
-    return sum / size;
 }
 
 /*
@@ -56,6 +30,7 @@ bool ADCRead::current_fill() {
         return 1;
     }
     current_samples[SAMPLES - i] = SCT013.calcIrms(5000);
+    sum += current_samples[SAMPLES - i];
     i++;
     return 0;
 }
@@ -67,12 +42,21 @@ bool ADCRead::current_fill() {
  * calcula a nova media retirando o offset de calibracao (smallest)
  */
 void ADCRead::current_check() {
+    static int sample_count = 0;
     double mean = 0;
+    double new_sample = SCT013.calcIrms(8000);
 
-    array_sample_shift(current_samples, SAMPLES);
-    current_samples[0] = SCT013.calcIrms(8000);
+    sum -= current_samples[sample_count];  // remove a amostra presente na posicao atual
+    current_samples[sample_count] = new_sample; // substitui pela nova amostra
+    sum += new_sample; // incrementa sum com a nova amostra
+    mean = sum / SAMPLES;
 
-    mean = sample_mean_calc(current_samples, SAMPLES);
+    if (sample_count >= SAMPLES) {
+        sample_count = 0;
+    } else {
+        sample_count++;
+    }
+
     Serial.print("Corrente: ");
     Serial.println(mean - smallest);
 
@@ -126,7 +110,7 @@ bool ADCRead::begin(uint8_t pin, double calibration, double small) {
  * atualiza o valor do threshold
  * seu valor sera setado em toda inicializacao com base no conteudo de setup.txt
  */
-void ADCRead::set_threshold(double threshold) {
+void ADCRead::set_threshold(const double threshold) {
     this->threshold = threshold;
     Serial.println("Threshold atual: ");
     Serial.println(threshold);
@@ -137,7 +121,7 @@ void ADCRead::set_threshold(double threshold) {
  * calcula o estado inicial do sensor apos completar a array
  */
 void ADCRead::initial_state() {
-    if (sample_mean_calc(current_samples, SAMPLES) - smallest > threshold) {
+    if ((sum / SAMPLES) - smallest > threshold) {
         state = 1;
     } else {
         state = 0;
@@ -164,7 +148,7 @@ void ADCRead::calibration(void (*set_timer)()) {
     
     if(calibration_state) {
         previous_calibration_state = 1;
-        threshold = mapdouble(analogRead(POTpin), 0, 1023, 0, 5);
+        threshold = mapdouble(analogRead(POTpin), 0, 1023, 0, 4);
         Serial.print("POT: ");
         Serial.println(threshold);
     }
