@@ -2,7 +2,6 @@
 #define _BUTTON_H_
 
 #include <Arduino.h>
-#include "pinout.h"
 
 class Button {
     private:
